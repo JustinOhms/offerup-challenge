@@ -10,7 +10,8 @@
 		"url" : "https://github.com/JustinOhms/offerupchallenge.git"
 	},
 	"dependencies" : {
-			"pg" : ">=4.4.3"
+			"pg" : ">=4.4.3",
+			"restify" : ">=4.0.3"
 		},
 	"devDependencies" : {
 		"supervisor" : ">=0.9.1"

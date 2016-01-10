@@ -5,6 +5,8 @@ justinohms@gmail.com
 ## Notes:
 - The vagrant file provided is configured to work with the parallels provider and uses a basic parallels ubuntu-14.04 box, adjust as needed.
 
+- The vagrant file forwards the hosts local port 80 to the client port 8080.  Make adjustments as needed if the host's port 80 is otherwise in use. 
+
 - To enable node debug port forwarding (port 5858) Run the `sshdebug.sh` script from the host to enable nodejs debug forwarding of port 5858 out of the client.  For some reason vagrant's built in port forwarding does not work with the debugger. This script will create the necessary ssh tunnel and port forwarding.  It will also leave the ssh session open to set up dependencies and start the service. *(see following notes)*
 
 - These next two steps are needed because I have not set up a vm image for vagrant yet.  You should only need to do them once.  
