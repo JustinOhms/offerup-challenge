@@ -1,0 +1,27 @@
+
+# Logs and databases #
+*.log
+*.sql
+*.sqlite
+
+# vagrant
+.vagrant
+
+# node packages
+node_modules
+
+# eclipse
+server/.settings
+server/.project
+ 
+# OS generated files #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Make sure we do not ignore this file #
+!.gitignore
