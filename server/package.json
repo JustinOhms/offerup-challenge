@@ -1,0 +1,18 @@
+{
+	"name" : "offerupchallenge",
+	"version" : "0.0.0",
+	"private" : true,
+	"description" : "OfferUp interview challenge",
+	"email" : "justinohms@gmail.com",
+	"main" : "server.js",
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/JustinOhms/offerupchallenge.git"
+	},
+	"dependencies" : {
+			"pg" : ">=4.4.3"
+		},
+	"devDependencies" : {
+		"supervisor" : ">=0.9.1"
+	}		
+}
