@@ -3,14 +3,12 @@ var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqp
 
 
 
-	
-
-
 exports.read = function(req, res, next){
 		var item = req.query.item;
 		var city = req.query.city;
-		var other = req.query.other;
 	
+		var queryParams;
+		var whereclause;
 		
 		//Guards
 		//if we neither city or item were provided then send the 404 error
@@ -23,12 +21,26 @@ exports.read = function(req, res, next){
 			});
 			next();
 		}
+
+		//adjust the where clause and parameters depending on if we have a city or not
+		if(city == undefined){
+			whereclause = " WHERE title = $1  "; 
+			queryParams = [item];
+		}else{
+			whereclause = " WHERE title = $1 AND city = $2 "; 
+			queryParams = [item, city];
+		}
+		
+		
 		
 		//construct the query
 		var queryTemplate = "WITH item AS ( " +
 			" SELECT id, title, list_price, sell_price, city, cashless  FROM \"itemPrices_itemsale\" " +
-			" WHERE title = $1 AND city = $2 ) " + 
-			" SELECT MODE() WITHIN GROUP (ORDER BY list_price DESC ) AS price_suggestion, count(id) AS item_count FROM item ;";
+			whereclause + 
+			" ) SELECT MODE() WITHIN GROUP (ORDER BY list_price DESC ) AS price_suggestion, " +
+			"    count(id) AS item_count, " +
+			"    MAX(title) as item" +
+			" FROM item ;";
 
 		
 		
@@ -56,24 +68,19 @@ exports.read = function(req, res, next){
 		      if(handleError(err)){ return; }
 
 		      
-		      client.query(queryTemplate, [item, city], function(err, result){
+		      client.query(queryTemplate, queryParams, function(err, result){
 		    	 
 		    	  if(handleError(err)){ return;}
 		    	  
 		    	  done(); //return the pg connection to the pool
-		    	  
-		    	  var itemCount = result.rows[0]['item_count'];
-		    	  var priceSuggestion = result.rows[0]['price_suggestion'];
+
+		    	  var content = result.rows[0];
+		    	      content.city = city == undefined ? "Not specified" : city;
 		    	  
 		    	  res.contentType = 'json';
 		    	  res.send({
 		    		  "status":200,
-		    		  "content":{
-		    			"item":item,
-		    			"item_count":itemCount,
-		    			"price_suggestion":priceSuggestion,
-		    			"city": city
-		    		  }
+		    		  "content":content
 		    	  });
 		    	  next();
 		      });

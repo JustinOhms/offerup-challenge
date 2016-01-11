@@ -44,7 +44,7 @@ describe('OfferUp Challenge API Test', function(){
  	it('Chairs in all cities', function(done){
  		this.timeout(5000);
 		superagent.get("http://localhost:8080/item-price-service?item=Chairs", function(err, res){
-			console.log(res.body);
+			//console.log(res.body);
 			var json = res.body;
 			assert.equal(json.status, 200);
 			assert.equal(json.content.item, "Chairs");
