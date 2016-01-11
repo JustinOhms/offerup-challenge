@@ -14,8 +14,8 @@ describe('OfferUp Challenge API Test', function(){
 		
 		var itemPriceService = require('../api.js');
 
-		server.get('/item-price-service', itemPriceService.read);
-		
+		server.get(/^\/item-price-service(?:\/)?$/i, itemPriceService.read);
+
 		server.listen(8080);
 	});
 	
@@ -27,7 +27,7 @@ describe('OfferUp Challenge API Test', function(){
 	//test to read chairs in seattle //count 5 @ mode 146
 	it('Chairs in Seattle', function(done){
 		this.timeout(5000);
-		superagent.get("http://localhost:8080/item-price-service?item=Chairs&city=Seattle", function(err, res){
+		superagent.get("http://localhost:8080/item-price-service/?item=Chairs&city=Seattle", function(err, res){
 			//console.log(res.body);
 			var json = res.body;
 			assert.equal(json.status, 200);
@@ -43,7 +43,7 @@ describe('OfferUp Challenge API Test', function(){
 	//test to read chairs in all cities  //count 104 @ mode 156
  	it('Chairs in all cities', function(done){
  		this.timeout(5000);
-		superagent.get("http://localhost:8080/item-price-service?item=Chairs", function(err, res){
+		superagent.get("http://localhost:8080/item-price-service/?item=Chairs", function(err, res){
 			//console.log(res.body);
 			var json = res.body;
 			assert.equal(json.status, 200);
@@ -59,7 +59,7 @@ describe('OfferUp Challenge API Test', function(){
 	
 	//test to read chairs in all cities  //count 104 @ mode 156
  	it('nothing nowhere should return 404', function(done){
-		superagent.get("http://localhost:8080/item-price-service", function(err, res){
+		superagent.get("http://localhost:8080/item-price-service/", function(err, res){
 			//console.log(res.body);
 			var json = res.body;
 			assert.equal(404, json.status);

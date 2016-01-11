@@ -2,11 +2,12 @@ var pg = require('pg');
 var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqpsohu0g.us-east-1.rds.amazonaws.com/itemprices"
 
 
-
 exports.read = function(req, res, next){
 		var item = req.query.item;
 		var city = req.query.city;
 	
+		//console.log("Request: city:" + city + " item:" +item);
+		
 		var queryParams;
 		var whereclause;
 		
@@ -37,9 +38,10 @@ exports.read = function(req, res, next){
 		var queryTemplate = "WITH item AS ( " +
 			" SELECT id, title, list_price, sell_price, city, cashless  FROM \"itemPrices_itemsale\" " +
 			whereclause + 
-			" ) SELECT MODE() WITHIN GROUP (ORDER BY list_price DESC ) AS price_suggestion, " +
+			" ) SELECT " +
+			"    MAX(title) as item," +
 			"    count(id) AS item_count, " +
-			"    MAX(title) as item" +
+			"   MODE() WITHIN GROUP (ORDER BY list_price DESC ) AS price_suggestion " +
 			" FROM item ;";
 
 		
@@ -74,6 +76,7 @@ exports.read = function(req, res, next){
 		    	  
 		    	  done(); //return the pg connection to the pool
 
+		    	  //content is correct as returned from the database but we need to add the city
 		    	  var content = result.rows[0];
 		    	      content.city = city == undefined ? "Not specified" : city;
 		    	  

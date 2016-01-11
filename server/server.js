@@ -16,7 +16,7 @@ var itemPriceService = require('./api.js');
 //set mappings
 //Your service should be able to take item & city parameters using the following pattern:
 //http://127.0.0.1/item-price-service/?item=Furniture&city=Philadelphia
-server.get('/item-price-service', itemPriceService.read);
+server.get(/^\/item-price-service(?:\/)?$/i, itemPriceService.read);
 
 
 server.listen(8080);
