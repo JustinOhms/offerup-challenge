@@ -11,15 +11,21 @@ justinohms@gmail.com
 
 - These next two steps are needed because I have not set up a vm image for vagrant yet.  You should only need to do them once.  
  - Install *node* and *npm*.  The easiest way will be with ubuntu package manager.   
+ You should also set up a symbolic link in */usr/bin* and install *supervisor* and *mocha* modules globally.
 `sudo apt-get install nodejs`    
 `sudo apt-get install npm`  
 `sudo ln -s /usr/bin/nodejs /usr/bin/node`
+`sudo npm install -g supervisor` 
+`sudo npm install -g mocha`
 
- - There are not many npm dependencies but you will need to install them in the vm.
+ - There are not many project npm dependencies but you will need to install them in the vm.
 `cd /vagrant/server/; npm install`
 
 - I also have not currently set up the server to automatically start so you will need to ssh into the server and manually start the node server.  *(you can reuse the session that was opened by the sshdebug.sh script)*   
  `node /vagrant/server/server.js`   
 or for development with supervisor and debug enabled   
  `supervisor --debug /vagrant/server/server.js`
+ 
+- To run tests in watch mode (on change reload)  
+ `mocha --watch`
 
