@@ -1,6 +1,9 @@
 var pg = require('pg').native;
 var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqpsohu0g.us-east-1.rds.amazonaws.com/itemprices"
 
+	pg.defaults.poolSize = 50;
+    pg.defaults.reapIntervalMillis = 10000;
+    
 
 exports.read = function(req, res, next){
 		var item = req.query.item;
