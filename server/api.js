@@ -1,3 +1,11 @@
+var pg = require('pg');
+var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqpsohu0g.us-east-1.rds.amazonaws.com/itemprices"
+
+
+
+	
+
+
 exports.read = function(req, res, next){
 		var item = req.query.item;
 		var city = req.query.city;
@@ -16,15 +24,61 @@ exports.read = function(req, res, next){
 			next();
 		}
 		
+		//construct the query
+		var queryTemplate = "WITH item AS ( " +
+			" SELECT id, title, list_price, sell_price, city, cashless  FROM \"itemPrices_itemsale\" " +
+			" WHERE title = $1 AND city = $2 ) " + 
+			" SELECT MODE() WITHIN GROUP (ORDER BY list_price DESC ) AS price_suggestion, count(id) AS item_count FROM item ;";
+
 		
 		
-		
-		//for now just echo the response
-		res.contentType = 'json';
-		res.send({
-			'item':item,
-			'city':city,
-			'other':other
+		//get a connection from the connection pool
+		pg.connect(conString, function(err, client, done){
+			
+		    var handleError = function(err) {
+		        // no error occurred, continue with the request
+		        if(!err) { return false; }
+
+		        // An error occurred, remove the client from the connection pool.
+		        // A truthy value passed to done will remove the connection from the pool
+		        // instead of simply returning it to be reused.
+		        // In this case, if we have successfully received a client (truthy)
+		        // then it will be removed from the pool.
+		        if(client){
+		          done(client);
+		        }
+		        
+		        res.end('An error occurred: ' + err);
+		        return true;
+		      };
+
+		      // handle an error from the connection
+		      if(handleError(err)){ return; }
+
+		      
+		      client.query(queryTemplate, [item, city], function(err, result){
+		    	 
+		    	  if(handleError(err)){ return;}
+		    	  
+		    	  done(); //return the pg connection to the pool
+		    	  
+		    	  var itemCount = result.rows[0]['item_count'];
+		    	  var priceSuggestion = result.rows[0]['price_suggestion'];
+		    	  
+		    	  res.contentType = 'json';
+		    	  res.send({
+		    		  "status":200,
+		    		  "content":{
+		    			"item":item,
+		    			"item_count":itemCount,
+		    			"price_suggestion":priceSuggestion,
+		    			"city": city
+		    		  }
+		    	  });
+		    	  next();
+		      });
+			
 		});
-		next();
+		
+
 	};
