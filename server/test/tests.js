@@ -54,6 +54,18 @@ describe('OfferUp Challenge API Test', function(){
 	});
 	
 	
+	//test to read chairs in all cities  //count 104 @ mode 156
+ 	it('nothing nowhere should return 404', function(done){
+		superagent.get("http://localhost:8080/item-price-service", function(err, res){
+			//console.log(res.body);
+			var json = res.body;
+			assert.equal(404, json.status);
+			assert.equal("Not found",json.content.message);
+			done();
+		});
+	});
+	
+	
 	after(function(){
 		server.close();
 	});
