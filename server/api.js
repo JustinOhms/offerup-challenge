@@ -1,4 +1,4 @@
-var pg = require('pg');
+var pg = require('pg').native;
 var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqpsohu0g.us-east-1.rds.amazonaws.com/itemprices"
 
 
