@@ -14,6 +14,11 @@
 			"restify" : ">=4.0.3"
 		},
 	"devDependencies" : {
-		"supervisor" : ">=0.9.1"
+		"supervisor" : ">=0.9.1",
+		"superagent" : ">=1.6.1",
+		"mocha" : ">=2.3.4"
+	},
+	"scripts" : {
+		"watch" : "mocha --watch"
 	}		
 }
