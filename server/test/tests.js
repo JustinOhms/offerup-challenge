@@ -56,7 +56,23 @@ describe('OfferUp Challenge API Test', function(){
 		});
 	});
 	
+	//test to read chairs in all cities  //count 104 @ mode 156
+ 	it('Chairs in all cities #2', function(done){
+ 		this.timeout(5000);
+		superagent.get("http://localhost:8888/item-price-service/?item=Chairs", function(err, res){
+			//console.log(res.body);
+			var json = res.body;
+			assert.equal(json.status, 200);
+			assert.equal(json.content.item, "Chairs");
+			assert.equal(json.content.item_count, 104);
+			assert.equal(json.content.price_suggestion, 156);
+			assert.equal(json.content.city, "Not specified");
+			
+			done();
+		});
+	});
 	
+		
 	//test to read chairs in all cities  //count 104 @ mode 156
  	it('nothing nowhere should return 404', function(done){
 		superagent.get("http://localhost:8888/item-price-service/", function(err, res){
