@@ -50,17 +50,26 @@ var queryGen = function(item, city){
 	}
 }
 
+/*
+ * sends the response object 
+ */
 var sendResponse = function(res, responseObject){
 	   res.contentType = "json";
 	   res.send(responseObject);
 }  
 
+/*
+ * adds the response object to the cache
+ */
 var cacheResponse = function(item, city, responseObject){
 		var key = keygen(item, city);
 
 		cache.put(key, responseObject, 30000);
 }
 
+/*
+ * generates the response object
+ */
  var generateResponseObject = function(content, city){
 		  content.city = city == undefined ? "Not specified" : city;
 		  return({
@@ -70,6 +79,58 @@ var cacheResponse = function(item, city, responseObject){
  }
 
  
+	//handle's postgress connection errors, closes client connection
+ var handlePgConnectionError = function(err, client, res) {
+     // no error occurred, continue with the request
+     if(!err) { return false; }
+
+     // An error occurred, remove the client from the connection pool.
+     // A truthy value passed to done will remove the connection from the pool
+     // instead of simply returning it to be reused.
+     // In this case, if we have successfully received a client (truthy)
+     // then it will be removed from the pool.
+     if(client){
+       done(client);
+     }
+     
+     res.end('An error occurred: ' + err);
+     return true;
+   };
+
+
+/*
+* handles connecting to postgres and running the query
+*/
+var connectAndQuery = function(item, city, res){
+		
+		//generate the the query
+		query = queryGen(item, city);
+		
+		//get a connection from the connection pool
+		pg.connect(conString, function(err, client, done){
+		      
+		      // handle an error from the connection
+		      if(handlePgConnectionError(err, client, res)){ return; }
+
+		      
+		      client.query(query.template, query.params, function(err, result){
+		    	 
+		    	  if(handlePgConnectionError(err, client, res)){ return;}
+		    	  
+		    	  done(); //return the pg connection to the pool
+
+		    	  
+		    	  //content object structure is correct json as returned from the database but we need to add the city
+		    	  var responseObject = generateResponseObject(result.rows[0], city);
+		    	  cacheResponse(item, city, responseObject)
+		    	  sendResponse(res, responseObject);
+		    	  next();
+		      });
+			
+		});
+	}
+	   
+   
 
 exports.read = function(req, res, next){
 		var item = req.query.item;
@@ -89,66 +150,14 @@ exports.read = function(req, res, next){
 			});
 			next();
 		}
-
-
-		//handle's postgress connection errors, closes client connection
-	    var handlePgConnectionError = function(err, client) {
-	        // no error occurred, continue with the request
-	        if(!err) { return false; }
-
-	        // An error occurred, remove the client from the connection pool.
-	        // A truthy value passed to done will remove the connection from the pool
-	        // instead of simply returning it to be reused.
-	        // In this case, if we have successfully received a client (truthy)
-	        // then it will be removed from the pool.
-	        if(client){
-	          done(client);
-	        }
-	        
-	        res.end('An error occurred: ' + err);
-	        return true;
-	      };
-
-
 	    
-		
-	    
-		var connectAndQuery = function(item, city){
-			
-			//generate the the query
-			query = queryGen(item, city);
-			
-			//get a connection from the connection pool
-			pg.connect(conString, function(err, client, done){
-			      
-			      // handle an error from the connection
-			      if(handlePgConnectionError(err, client)){ return; }
-
-			      
-			      client.query(query.template, query.params, function(err, result){
-			    	 
-			    	  if(handlePgConnectionError(err, client)){ return;}
-			    	  
-			    	  done(); //return the pg connection to the pool
-
-			    	  
-			    	  //content object structure is correct json as returned from the database but we need to add the city
-			    	  var responseObject = generateResponseObject(result.rows[0], city);
-			    	  cacheResponse(item, city, responseObject)
-			    	  sendResponse(res, responseObject);
-			    	  next();
-			      });
-				
-			});
-		}
-		
-		
+		//generate the key
 		var key = keygen(item, city);
 		
 		var responseObject = cache.get(key);
 		if(responseObject == null){
 			console.log("cache MISS")
-			connectAndQuery(item, city);
+			connectAndQuery(item, city, res);
 		}else{
 			console.log("cache hit")
 			sendResponse(res, responseObject);
