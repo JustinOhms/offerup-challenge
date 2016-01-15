@@ -7,6 +7,8 @@ var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqp
 	pg.defaults.poolSize = 50;
     pg.defaults.reapIntervalMillis = 10000;
 
+  
+    
     
     
 /*
@@ -14,7 +16,7 @@ var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqp
  */    
 var keygen = function(item, city){
 	//TODO: replace with hashing function
-	return city == undefined || city == null ? item : city + item;
+	return city == undefined || city == null ? "ALLCITIES:" +  item  : city + ":" + item;
 };    
 
 
@@ -50,6 +52,17 @@ var queryGen = function(item, city){
 	}
 }
 
+/**
+ * the generic 404 reponse
+ */
+var reponse404 = {
+		"status":404,
+		"content":{
+			"message":"Not found"
+		}	
+};
+   
+
 /*
  * sends the response object 
  */
@@ -71,6 +84,10 @@ var cacheResponse = function(item, city, responseObject){
  * generates the response object
  */
  var generateResponseObject = function(content, city){
+	 	  if(content["item_count"] == 0){
+	 		  return reponse404;
+	 	  }
+	 
 		  content.city = city == undefined ? "Not specified" : city;
 		  return({
 			  "status":200,
@@ -100,7 +117,6 @@ var cacheResponse = function(item, city, responseObject){
 
    
 var pendingQ = {}   
-
 var sendForAllPending = function(key, responseObject) {
 	var ress = pendingQ[key];
 	var reslen = ress.length;
@@ -156,8 +172,9 @@ var connectAndQuery = function(item, city, res){
 	
 
 	}
-	   
-   
+
+
+
 
 exports.read = function(req, res, next){
 		var item = req.query.item;
@@ -169,12 +186,7 @@ exports.read = function(req, res, next){
 		//city is optional but you must at least provide an item
 		//if we neither city or item were provided then send the 404 error
 		if(item == undefined || ( item == undefined && city == undefined)){
-			res.send({
-				"status":404,
-				"content":{
-					"message":"Not found"
-				}
-			});
+			sendResponse(res, reponse404);
 			next();
 		}
 	    
