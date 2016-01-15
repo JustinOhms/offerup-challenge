@@ -2,6 +2,8 @@ var assert = require('assert');
 var restify = require('restify');
 var superagent = require('superagent');
 
+//mocha tests written in assert style ... 
+//TODO: change these to spec style
 describe('OfferUp Challenge API Test', function(){
 	var server;
 	
@@ -24,7 +26,7 @@ describe('OfferUp Challenge API Test', function(){
 		done();
 	});
 	
-	//test to read chairs in seattle //count 5 @ mode 146
+	//test to read chairs in seattle //count 60 @ mode 29
 	it('Chairs in Seattle', function(done){
 		this.timeout(5000);
 		superagent.get("http://localhost:8888/item-price-service/?item=Chairs&city=Seattle", function(err, res){
@@ -32,15 +34,27 @@ describe('OfferUp Challenge API Test', function(){
 			var json = res.body;
 			assert.equal(json.status, 200);
 			assert.equal(json.content.item, "Chairs");
-			assert.equal(json.content.item_count, 5);
-			assert.equal(json.content.price_suggestion, 146);
+			assert.equal(json.content.item_count, 60);
+			assert.equal(json.content.price_suggestion, 29);
 			assert.equal(json.content.city, "Seattle");
 			
 			done();
 		});
 	});
 	
-	//test to read chairs in all cities  //count 104 @ mode 156
+	//test not a real item should return 404
+	it('NotARealItem in Seattle', function(done){
+		this.timeout(5000);
+		superagent.get("http://localhost:8888/item-price-service/?item=NotARealitem&city=Seattle", function(err, res){
+			//console.log(res.body);
+			var json = res.body;
+			assert.equal(404, json.status);
+			assert.equal("Not found",json.content.message);
+			done();
+		});
+	});
+	
+	//test to read chairs in all cities  //count 897 @ mode 35
  	it('Chairs in all cities', function(done){
  		this.timeout(5000);
 		superagent.get("http://localhost:8888/item-price-service/?item=Chairs", function(err, res){
@@ -48,15 +62,15 @@ describe('OfferUp Challenge API Test', function(){
 			var json = res.body;
 			assert.equal(json.status, 200);
 			assert.equal(json.content.item, "Chairs");
-			assert.equal(json.content.item_count, 104);
-			assert.equal(json.content.price_suggestion, 156);
+			assert.equal(json.content.item_count, 897);
+			assert.equal(json.content.price_suggestion, 35);
 			assert.equal(json.content.city, "Not specified");
 			
 			done();
 		});
 	});
 	
-	//test to read chairs in all cities  //count 104 @ mode 156
+	//test to read chairs in all cities  //count 897 @ mode 35  (used for checking cache hits in console)
  	it('Chairs in all cities #2', function(done){
  		this.timeout(5000);
 		superagent.get("http://localhost:8888/item-price-service/?item=Chairs", function(err, res){
@@ -64,16 +78,17 @@ describe('OfferUp Challenge API Test', function(){
 			var json = res.body;
 			assert.equal(json.status, 200);
 			assert.equal(json.content.item, "Chairs");
-			assert.equal(json.content.item_count, 104);
-			assert.equal(json.content.price_suggestion, 156);
+			assert.equal(json.content.item_count, 897);
+			assert.equal(json.content.price_suggestion, 35);
 			assert.equal(json.content.city, "Not specified");
 			
 			done();
 		});
 	});
 	
+ 	
 		
-	//test to read chairs in all cities  //count 104 @ mode 156
+	//no city nowhere return 404
  	it('nothing nowhere should return 404', function(done){
 		superagent.get("http://localhost:8888/item-price-service/", function(err, res){
 			//console.log(res.body);

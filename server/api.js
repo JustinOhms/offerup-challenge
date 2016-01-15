@@ -7,6 +7,8 @@ var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqp
 	pg.defaults.poolSize = 50;
     pg.defaults.reapIntervalMillis = 10000;
 
+  
+    
     
     
 /*
@@ -14,7 +16,7 @@ var conString = "postgres://offerupchallenge:ouchallenge@offerupchallenge.cgtzqp
  */    
 var keygen = function(item, city){
 	//TODO: replace with hashing function
-	return city == undefined || city == null ? item : city + item;
+	return city == undefined || city == null ? "ALLCITIES:" +  item  : city + ":" + item;
 };    
 
 
@@ -50,6 +52,17 @@ var queryGen = function(item, city){
 	}
 }
 
+/**
+ * the generic 404 reponse
+ */
+var reponse404 = {
+		"status":404,
+		"content":{
+			"message":"Not found"
+		}	
+};
+   
+
 /*
  * sends the response object 
  */
@@ -71,6 +84,10 @@ var cacheResponse = function(item, city, responseObject){
  * generates the response object
  */
  var generateResponseObject = function(content, city){
+	 	  if(content["item_count"] == 0){
+	 		  return reponse404;
+	 	  }
+	 
 		  content.city = city == undefined ? "Not specified" : city;
 		  return({
 			  "status":200,
@@ -80,7 +97,7 @@ var cacheResponse = function(item, city, responseObject){
 
  
 	//handle's postgress connection errors, closes client connection
- var handlePgConnectionError = function(err, client, res) {
+ var handlePgConnectionError = function(err, client, key) {
      // no error occurred, continue with the request
      if(!err) { return false; }
 
@@ -93,44 +110,71 @@ var cacheResponse = function(item, city, responseObject){
        done(client);
      }
      
-     res.end('An error occurred: ' + err);
+     //res.end('An error occurred: ' + err);
+     sendForAllPending(key, {"error":'An error occured:' + err}); //TODO: fix
      return true;
    };
 
-
+   
+var pendingQ = {}   
+var sendForAllPending = function(key, responseObject) {
+	var ress = pendingQ[key];
+	var reslen = ress.length;
+	for(var i=0; i <reslen; i++){
+		sendResponse(ress[i], responseObject);
+		console.log("PENDING RESPONSE SENT FOR :" + key);
+	}
+	delete pendingQ[key]; //delete the array
+}
+   
 /*
 * handles connecting to postgres and running the query
 */
 var connectAndQuery = function(item, city, res){
 		
-		//generate the the query
-		query = queryGen(item, city);
-		
-		//get a connection from the connection pool
-		pg.connect(conString, function(err, client, done){
-		      
-		      // handle an error from the connection
-		      if(handlePgConnectionError(err, client, res)){ return; }
-
-		      
-		      client.query(query.template, query.params, function(err, result){
-		    	 
-		    	  if(handlePgConnectionError(err, client, res)){ return;}
-		    	  
-		    	  done(); //return the pg connection to the pool
-
-		    	  
-		    	  //content object structure is correct json as returned from the database but we need to add the city
-		    	  var responseObject = generateResponseObject(result.rows[0], city);
-		    	  cacheResponse(item, city, responseObject)
-		    	  sendResponse(res, responseObject);
-		    	  next();
-		      });
+		var key = keygen(item, city);
+		if(pendingQ[key] == undefined){
+				console.log("New Query:"  + key);
 			
-		});
+				//pop the res into the pendingQ
+				pendingQ[key] = [res];
+			
+				//generate the the query
+				query = queryGen(item, city);
+				
+				//get a connection from the connection pool
+				pg.connect(conString, function(err, client, done){
+				      
+				      // handle an error from the connection
+				      if(handlePgConnectionError(err, client, key)){ return; }
+	
+				      
+				      client.query(query.template, query.params, function(err, result){
+				    	 
+				    	  if(handlePgConnectionError(err, client, key)){ return;}
+				    	  
+				    	  done(); //return the pg connection to the pool
+	
+				    	  
+				    	  //content object structure is correct json as returned from the database but we need to add the city
+				    	  var responseObject = generateResponseObject(result.rows[0], city);
+				    	  cacheResponse(item, city, responseObject)
+				    	  sendForAllPending(key, responseObject);
+				    	  next();
+				      });
+					
+				});			
+		}else{
+			//query is already pending push the response object onto the array
+			console.log("Query pending :" + key);
+			pendingQ[key].push(res);
+		}
+	
+
 	}
-	   
-   
+
+
+
 
 exports.read = function(req, res, next){
 		var item = req.query.item;
@@ -142,12 +186,7 @@ exports.read = function(req, res, next){
 		//city is optional but you must at least provide an item
 		//if we neither city or item were provided then send the 404 error
 		if(item == undefined || ( item == undefined && city == undefined)){
-			res.send({
-				"status":404,
-				"content":{
-					"message":"Not found"
-				}
-			});
+			sendResponse(res, reponse404);
 			next();
 		}
 	    
